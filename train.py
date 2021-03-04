@@ -134,7 +134,6 @@ def train(args):
 
         pg = [p for p in net.parameters() if p.requires_grad]
 
-        loss_function = nn.CrossEntropyLoss()
         optimizer = optim.SGD(pg, lr=args.lr, momentum=0.9, weight_decay=0.0001)
 
         save_path = "./model_data.pth"
