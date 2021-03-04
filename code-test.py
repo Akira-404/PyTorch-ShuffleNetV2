@@ -54,10 +54,3 @@ if __name__ == '__main__':
     ret = channel_shuffle(img1, 2)
     print('ret size:', ret.size())
     print('ret:', ret)
-
-    # conv = nn.Conv2d(in_channels=6, out_channels=6, kernel_size=3, groups=2)
-    # print("groups=2", conv.weight.data.size())
-    # conv = nn.Conv2d(in_channels=6, out_channels=6, kernel_size=3, groups=3)
-    # print("groups=3", conv.weight.data.size())
-    # conv = nn.Conv2d(in_channels=6, out_channels=6, kernel_size=3, groups=6)
-    # print("groups=6", conv.weight.data.size())
