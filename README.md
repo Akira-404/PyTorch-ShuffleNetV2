@@ -1,0 +1,2 @@
+# PyTorch-ShuffleNetV2
+基于PyTorch的ShuffleNetV2模型实现
