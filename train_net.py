@@ -8,11 +8,13 @@ import torch.optim.lr_scheduler as lr_scheduler
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-from torchvision import transforms, datasets
+from torchvision import transforms
 import torch.optim as optim
 from tqdm import tqdm
 
+from my_dataset import MyDataSet
 from model import shufflenet_v2_x1
+from data_preparation import split_data
 
 
 def train_one_epoch(model, optimizer, data_loader, device, epoch):
@@ -77,20 +79,14 @@ def train(args):
     image_path = args.data_path
     assert os.path.exists(image_path), "{} 路径不存在.".format(image_path)
 
-    train_dataset = datasets.ImageFolder(root=os.path.join(image_path, "train"),
-                                         transform=data_transform["train"])
-    train_num = len(train_dataset)
+    train_images_path, train_images_label, val_images_path, val_images_label = split_data(args.data_path)
 
-    # 将类型和索引反序并保持到json文件
-    flower_list = train_dataset.class_to_idx
-    cla_dict = dict((val, key) for key, val in flower_list.items())
-    print("cla_dict:", cla_dict)
-
-    # 将python对象编码成Json字符串
-    json_str = json.dumps(cla_dict, indent=4)
-    # 写入文件
-    with open('class_indices.json', 'w') as json_file:
-        json_file.write(json_str)
+    train_dataset = MyDataSet(images_path=train_images_path,
+                              images_label=train_images_label,
+                              transform=data_transform['train'])
+    val_dataset = MyDataSet(images_path=val_images_path,
+                            images_label=val_images_label,
+                            transform=data_transform['val'])
 
     batch_size = args.batch_size
 
@@ -99,18 +95,17 @@ def train(args):
     print('Using {} dataloader workers every process'.format(nw))
 
     train_loader = DataLoader(train_dataset,
-                              batch_size=batch_size, shuffle=True,
-                              num_workers=nw)
-
-    validate_dataset = datasets.ImageFolder(root=os.path.join(image_path, "val"),
-                                            transform=data_transform["val"])
-    val_num = len(validate_dataset)
-    validate_loader = DataLoader(validate_dataset,
-                                 batch_size=batch_size, shuffle=False,
-                                 num_workers=nw)
-
-    print("using {} images for training, {} images for validation.".format(train_num,
-                                                                           val_num))
+                              batch_size=batch_size,
+                              shuffle=True,
+                              pin_memory=True,
+                              num_workers=nw,
+                              collate_fn=train_dataset.collate_fn)
+    val_loader = DataLoader(val_dataset,
+                            batch_size=batch_size,
+                            shuffle=False,
+                            pin_memory=True,
+                            num_workers=nw,
+                            collate_fn=val_dataset.collate_fn)
 
     device = torch.device(args.device if torch.cuda.is_available() else "cpu")
     print("using {} device.".format(device))
@@ -121,14 +116,13 @@ def train(args):
 
         # 加载预训练权重
         if os.path.exists(args.weights):
-            model_weight_path = args.weights
-            pre_weights = torch.load(model_weight_path, map_location=device)
+            pre_weights = torch.load(args.weights, map_location=device)
             load_weights_dict = {k: v for k, v in pre_weights.items()
                                  if pre_weights.state_dict()[k].numel() == v.numel()}
             print(net.load_state_dict(load_weights_dict, strict=False))
+
         if args.freeze_layers:
             for name, param in net.named_parameters():
-                print(name)
                 if 'fc' not in name:
                     param.requires_grad_(False)
 
@@ -148,10 +142,10 @@ def train(args):
 
             # validate
             sum_num = evaluate(model=net,
-                               data_loader=validate_loader,
+                               data_loader=val_loader,
                                device=device)
 
-            acc = sum_num / len(validate_dataset)
+            acc = sum_num / len(val_dataset)
             print("[epoch {}] accuracy: {}".format(epoch, round(acc, 3)))
 
             torch.save(net.state_dict(), save_path)

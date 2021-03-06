@@ -9,7 +9,6 @@ class MyDataSet(Dataset):
         self.images_path = images_path
         self.images_label = images_label
         self.transform = transform
-        print("images_path:{},images_class:{}".format(self.images_path, self.images_label))
 
     def __getitem__(self, item):
         img = Image.open(self.images_path[item])
@@ -23,7 +22,8 @@ class MyDataSet(Dataset):
     def __len__(self):
         return len(self.images_path)
 
-    def collate_fn(self, batch):
+    @staticmethod
+    def collate_fn(batch):
         images, labels = tuple(zip(*batch))
         images = torch.stack(images, dim=0)
         labels = torch.as_tensor(labels)

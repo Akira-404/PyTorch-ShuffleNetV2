@@ -2,6 +2,6 @@
 .idea/
 venv/
 
-__pycache__/model.cpython-37.pyc
+__pycache__/
 
 model_data.pth

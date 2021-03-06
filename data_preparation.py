@@ -14,14 +14,13 @@ def split_data(root: str, val_rate: float = 0.2):
     obj_class = [cla for cla in os.listdir(root) if os.path.isdir(os.path.join
                                                                   (root, cla))]
     obj_class.sort()
-    print('obj_class:', obj_class)
+    # print('obj_class:', obj_class)
 
     class_indices = dict((k, v) for v, k in enumerate(obj_class))
-    print("class_indices:", class_indices)
+    # print("class_indices:", class_indices)
 
     json_str = json.dumps(dict((k, v) for k, v in enumerate(class_indices)), indent=4)
     # json_str = json.dumps(dict((v, k) for k, v in class_indices.items()), indent=4)
-    print(json_str)
     with open('class_indices.json', 'w')as json_file:
         json_file.write(json_str)
 
@@ -44,7 +43,8 @@ def split_data(root: str, val_rate: float = 0.2):
 
         # images = [os.path.join(root, cla, name) for name in os.listdir(cla_path)
         #           if os.path.splitext(name)[-1] in supported]
-        print(images)
+        # print(images)
+
         images_class = class_indices[cla]
         # 记录当前样本数量
         every_class_num.append(len(images))
@@ -62,7 +62,7 @@ def split_data(root: str, val_rate: float = 0.2):
     print("{} images were found in the dataset.".format(sum(every_class_num)))
     print("{} images for training.".format(len(train_images_path)))
     print("{} images for validation.".format(len(val_images_path)))
-
+    print('data split done!\n')
     return train_images_path, train_images_label, val_images_path, val_images_label
 
 
